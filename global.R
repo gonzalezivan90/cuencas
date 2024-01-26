@@ -40,3 +40,11 @@ cleantable <- allzips %>%
     Lat = latitude,
     Long = longitude
   )
+
+
+# system('sudo shiny; cd /home/shiny/connecting-landscapes; git add . ; git commit -m "Change coordiantes()"; git push')
+# git pull main --rebase --autostash
+# sudo chown -R shiny:shiny .
+# git stash
+# remove before commit, split or lost it
+# git pull connectscape |||  git pull --rebase --autostash || git pull origin HEAD
