@@ -1,18 +1,24 @@
 library(leaflet)
+library(shiny)
+library(shinydashboard)
 
 # Choices for drop-downs
 vars <- c(
-  "Is SuperZIP?" = "superzip",
-  "Centile score" = "centile",
-  "College education" = "college",
-  "Median income" = "income",
-  "Population" = "adultpop"
+  "Tamaño cuenca original" = "km2Nosn",
+  "Tamaño cuenca ajustado" = "km2Hort",
+  "Validado" = "validated",
+  "Diferencia en Km2 entre cuencas" = "differencekm2",
+  "Diferencia en % entre cuencas" = "differenceperc",
+  "Fuente" = "source"
+  #"Caudal promedio anual" = 'annualav',
+  #"Caudal minimo anual" = 'annualmn',
+  #"Caudal maximo anual" = 'annualmx'
 )
 
 
-navbarPage("Superzip", id="nav",
+navbarPage("Cuencas", id="nav",
            
-           tabPanel("Interactive map",
+           tabPanel("Mapa",
                     div(class="outer",
                         
                         tags$head(
@@ -29,17 +35,45 @@ navbarPage("Superzip", id="nav",
                                       draggable = TRUE, top = 60, left = "auto", right = 20, bottom = "auto",
                                       width = 330, height = "auto",
                                       
-                                      h2("ZIP explorer"),
+                                      shiny::fixedRow(
+                                        column(8, h3("Visualización")), 
+                                        column(4, actionButton("inXreset", HTML("Reset view")))
+                                        ),
                                       
-                                      selectInput("color", "Color", vars),
+                                      h4(''),
+                                      
+                                      selectInput("inxcolor", "Color de puntos", vars),
                                       selectInput("size", "Size", vars, selected = "adultpop"),
                                       conditionalPanel("input.color == 'superzip' || input.size == 'superzip'",
                                                        # Only prompt for threshold when coloring or sizing by superzip
                                                        numericInput("threshold", "SuperZIP threshold (top n percentile)", 5)
                                       ),
+                                      # shinydashboard::box( width = 10, solidHeader = FALSE, collapsible = TRUE, 
+                                      #                      title = "Advanced parameters", status = "primary", 
+                                      #                      collapsed = F, 
+                                      #                      column(12, 
+                                      #                             sliderInput("orders", "Orders", min = 1, max = 2000, value = 650)
+                                      #                      )
+                                      # ),
+          
+                                      h3("Validación"),
                                       
-                                      plotOutput("histCentile", height = 200),
-                                      plotOutput("scatterCollegeIncome", height = 250)
+                                      textInput("inxuser", "Usuario:", ''),
+                                      textInput("inxqlid", "ID de estación:", ''),
+                                      actionButton("govalidate", HTML("Validar cuenca")),
+                                      h4(''),
+                                      
+                                      textInput("inxcomment", "Comentario:", ''),
+                                      actionButton("gocoment", HTML("Enviar comentario")),
+                                      h4(''),
+                                      
+                                      verbatimTextOutput("inxxcord"),
+                                      verbatimTextOutput("inxycord"),
+                                      actionButton("gocoord", HTML("Enviar coordenada")),
+                                      verbatimTextOutput("outxlog")
+                                      
+                                      # plotOutput("histCentile", height = 200),
+                                      # plotOutput("scatterCollegeIncome", height = 250)
                         ),
                         
                         tags$div(id="cite",
@@ -48,7 +82,7 @@ navbarPage("Superzip", id="nav",
                     )
            ),
            
-           tabPanel("Data explorer",
+           tabPanel("Datos",
                     fluidRow(
                       column(3,
                              selectInput("states", "States", c("All states"="", structure(state.abb, names=state.name), "Washington, DC"="DC"), multiple=TRUE)

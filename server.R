@@ -4,27 +4,100 @@ library(scales)
 library(lattice)
 library(dplyr)
 
+library(viridisLite)
 # Leaflet bindings are a bit slow; for now we'll just sample to compensate
-set.seed(100)
-zipdata <- allzips[sample.int(nrow(allzips), 10000),]
-# By ordering by centile, we ensure that the (comparatively rare) SuperZIPs
-# will be drawn last and thus be easier to see
-zipdata <- zipdata[order(zipdata$centile),]
+# set.seed(100)
+# zipdata <- allzips[sample.int(nrow(allzips), 10000),]
+# # By ordering by centile, we ensure that the (comparatively rare) SuperZIPs
+# # will be drawn last and thus be easier to see
+# zipdata <- zipdata[order(zipdata$centile),]
 
 function(input, output, session) {
   
   ## Interactive Map ###########################################
   
   # Create the map
-  output$map <- renderLeaflet({
-    leaflet()  %>% addTiles() %>% 
+  basemap <- leaflet()  %>% addTiles() %>% 
       addCircleMarkers(data = qlPts, 
                        layerId = ~id2,
                        label = ~id2, 
-                       group = 'Points', radius = 2) # , lng = ~xshp, lat = ~yshp
-     # addCircleMarkers(data = rv$pts_sp, label = ~ID, group = 'Points',  radius = 5)
+                       group = 'Points', radius = 2) %>%
+    addProviderTiles( "OpenStreetMap", group = "OpenStreetMap" ) %>%
+    addProviderTiles( "Esri.WorldImagery", group = "Esri.WorldImagery" ) %>%
+    addLayersControl(baseGroups = c("OpenStreetMap", "Esri.WorldImagery")) %>%
+      addLegend(colors = c('red', 'blue'), 
+                labels = c('Snip', 'Original'), opacity = 0.7, title = NULL,
+                position = "bottomleft") # , lng = ~xshp, lat = ~yshp
+    # addCircleMarkers(data = rv$pts_sp, label = ~ID, group = 'Points',  radius = 5)
     #label = ~ID, group = 'Points'
-      #addTiles() # %>% setView(lng = -93.85, lat = 37.45, zoom = 4)
+    #addTiles() # %>% setView(lng = -93.85, lat = 37.45, zoom = 4)
+  
+  observeEvent( input$inXreset,{
+    output$map <- renderLeaflet({
+      basemap
+    })
+    output$inxxcord <-  renderText({isolate("X: NA")})
+    output$inxycord <- renderText({isolate("Y: NA")})
+  })
+  
+  output$map <- renderLeaflet({
+    basemap
+  })
+  
+  output$inxxcord <-  renderText({isolate("X: NA")})
+  output$inxycord <- renderText({isolate("Y: NA")})
+  
+  
+  reactive({
+    
+    selCol <- input$inxcolor
+    # selCol <- "Tamaño cuenca original"
+    selVar <- vars[names(vars) %in% selCol]
+    qlPts$tempVar <- as.data.frame(qlPts[, selVar])[, selVar]
+    # vars <- c(
+    #   "Tamaño cuenca original" = "km2Nosn",
+    #   "Tamaño cuenca ajustado" = "km2Hort",
+    #   "Validado" = "validated",
+    #   "Diferencia en Km2 entre cuencas" = "differencekm2",
+    #   "Diferencia en % entre cuencas" = "differenceperc",
+    #   "Fuente" = "source"
+    # )
+    
+    if (selVar %in% c('validated', 'source') ) {
+      
+    } else if( selVar %in% c('km2Nosn','km2Hort','km2Nosn','km2Nosn')) {
+      
+    }
+    
+    
+    leaflet()  %>% addTiles() %>% 
+      addCircleMarkers(data = qlPts, 
+                       layerId = ~id2,
+                       color = ~pal(tempVar),
+                       label = ~id2, 
+                       group = 'Points', radius = 2) %>%
+      addProviderTiles( "OpenStreetMap", group = "OpenStreetMap" ) %>%
+      addProviderTiles( "Esri.WorldImagery", group = "Esri.WorldImagery" ) %>%
+      addLayersControl(baseGroups = c("OpenStreetMap", "Esri.WorldImagery")) %>%
+      addLegend(colors = c('red', 'blue'), 
+                labels = c('Snip', 'Original'), opacity = 0.7, title = NULL,
+                position = "bottomleft") # , lng = ~xshp, lat = ~yshp
+    # addCircleMarkers(data = rv$pts_sp, label = ~ID, group = 'Points',  radius = 5)
+    #label = ~ID, group = 'Points'
+    #addTiles() # %>% setView(lng = -93.85, lat = 37.45, zoom = 4)
+    
+    
+    # get domain of numeric data
+    (domain <- range(quakes$depth))
+    
+    # make palette
+    pal <- colorNumeric(palette = viridis(100), domain = domain)
+    
+    # make map
+    leaflet(quakes) %>% 
+      addTiles() %>% 
+      addCircleMarkers(color = ~pal(depth)) 
+    
   })
   
   # A reactive expression that returns the set of zips that are
@@ -42,32 +115,186 @@ function(input, output, session) {
   # })
   
   
+  observe({
+    if (is.null(input$map_marker_click) & !is.null (input$map_click)){
+    print(input$map_click)
+    output$inxxcord <- renderText({isolate(paste0("X: ", input$map_click$lng))})
+    output$inxycord <- renderText({isolate(paste0("Y: ", input$map_click$lat))})
+    } else if( !is.null(input$map_marker_click) & is.null (input$map_click) ) {
+      clk <- input$map_marker_click;
+      idLayer <- clk$id
+      #print(clk)
+      # idLayer <- "per-359"
+      
+      newPt <- newPoints[ which(newPoints$qlid == idLayer),]
+      selBas <- basins[ which(basins$id2 == idLayer),  ]
+      xBas <- selBas[selBas$bastype == 'nosn', ]
+      #xSni <- selBas[selBas$bastype == 'snip', ]
+      xHor <- selBas[selBas$bastype == 'hort', ]
+      #selBas$color <- c('red', 'blue', 'black')
+      #print(selBas)
+      #print(xHor)
+      updateTextInput(session, inputId = 'inxqlid', value = idLayer)
+      
+      if(nrow(xHor) >= 1){
+        #print(' OK A')
+        #leaflet() %>% addTiles() 
+        
+        bbox <- st_bbox(selBas) %>% as.vector()
+        
+        leafletProxy("map") %>% fitBounds(bbox[1], bbox[2], bbox[3], bbox[4]) %>% 
+          removeMarker(layerId = 'NewPoint')  %>% 
+          removeMarker(layerId = 'OriginalPoint') %>%
+          addPolygons(data = xHor, 
+                      group = 'Snipped',
+                      color = 'red',
+                      weight = 2,
+                      opacity = 1,
+                      dashArray = "3",
+                      fillOpacity = 0.2,
+                      label = sprintf(
+                        "<strong>Station ID: </strong>%s<br>Snip:%g Km<sup>2</sup>",
+                        xHor$id2, round(xHor$km2, 3)
+                      ) %>% lapply(htmltools::HTML),
+                      
+                      labelOptions = labelOptions(
+                        style = list("font-weight" = "normal", padding = "3px 8px"),
+                        textsize = "15px",
+                        direction = "auto")) %>%
+          
+          addPolygons(data = xBas, 
+                      group = 'Original',
+                      color = 'blue',
+                      stroke = 10,
+                      weight = 2,
+                      opacity = 1,
+                      dashArray = "3",
+                      fillOpacity = 0.2,
+                      label = sprintf(
+                        "<strong>Station ID: </strong>%s<br>Snip:%g Km<sup>2</sup>",
+                        xBas$id2, round(xBas$km2, 3)
+                      ) %>% lapply(htmltools::HTML),
+                      
+                      labelOptions = labelOptions(
+                        style = list("font-weight" = "normal", padding = "3px 8px"),
+                        textsize = "15px",
+                        direction = "auto")) %>%
+          
+          addCircleMarkers(lng = newPt$xnew,
+                           lat = newPt$ynew, 
+                           color = 'red',
+                           group = 'NewPoint', 
+                           radius = 5) %>%
+          
+          addCircleMarkers(
+            lng = newPt$xshp,
+            lat = newPt$yshp, 
+            color = 'blue', radius = 20,
+            group = 'OriginalPoint'
+          )  %>%
+          
+          addLayersControl(baseGroups = c("OpenStreetMap", "Esri.WorldImagery"),
+                           position = 'topleft', 
+                           overlayGroups = c('Points',
+                                             'NewPoint',
+                                             'OriginalPoint'
+                           ),
+                           options = layersControlOptions(collapsed = FALSE)) 
+        
+        
+      }
+      
+    }
+    
+  })
+    
+  
   observeEvent(input$map_marker_click,{
     clk <- input$map_marker_click;
     idLayer <- clk$id
-    #idLayer <- "per-552"
+    #print(clk)
+    # idLayer <- "per-359"
     
     newPt <- newPoints[ which(newPoints$qlid == idLayer),]
-    selBas <- bas[ which(bas$id2 == idLayer),  ]
+    selBas <- basins[ which(basins$id2 == idLayer),  ]
     xBas <- selBas[selBas$bastype == 'nosn', ]
-    xSni <- selBas[selBas$bastype == 'snip', ]
+    #xSni <- selBas[selBas$bastype == 'snip', ]
     xHor <- selBas[selBas$bastype == 'hort', ]
+    #selBas$color <- c('red', 'blue', 'black')
+    #print(selBas)
+    #print(xHor)
+    updateTextInput(session, inputId = 'inxqlid', value = idLayer)
     
-    # leaflet() %>%
-    #   addTiles() %>%
-    #   addPolygons(data = lay2plot, weight = 0, popup = popup,
-    #               fillOpacity = .9, color = ~pal(Col)) %>%
-    #   addLegend("bottomright", pal = pal, values = lay2plot$Col,
-    #             title = gsub('X', 'Registros en ', field.plot), opacity = 1)
-    
-    leafletProxy("map") %>% 
-      leaflet()  %>% addTiles() %>%
-      addPolygons(data = selBas, 
-                   weight = 1, fillOpacity = .9) # popup = popup
-     # clearPopups() %>% addPopups(clk$lng, clk$lat, text)
+    if(nrow(xHor) >= 1){
+      #print(' OK A')
+      #leaflet() %>% addTiles() 
+      
+      bbox <- st_bbox(selBas) %>% as.vector()
+      
+      leafletProxy("map") %>% fitBounds(bbox[1], bbox[2], bbox[3], bbox[4]) %>% 
+        removeMarker(layerId = 'NewPoint')  %>% 
+        removeMarker(layerId = 'OriginalPoint') %>%
+        addPolygons(data = xHor, 
+                    group = 'Snipped',
+                    color = 'red',
+                    weight = 2,
+                    opacity = 1,
+                    dashArray = "3",
+                    fillOpacity = 0.2,
+                    label = sprintf(
+                      "<strong>Station ID: </strong>%s<br>Snip:%g Km<sup>2</sup>",
+                      xHor$id2, round(xHor$km2, 3)
+                    ) %>% lapply(htmltools::HTML),
+                    
+                    labelOptions = labelOptions(
+                      style = list("font-weight" = "normal", padding = "3px 8px"),
+                      textsize = "15px",
+                      direction = "auto")) %>%
+        
+        addPolygons(data = xBas, 
+                    group = 'Original',
+                    color = 'blue',
+                    stroke = 10,
+                    weight = 2,
+                    opacity = 1,
+                    dashArray = "3",
+                    fillOpacity = 0.2,
+                    label = sprintf(
+                      "<strong>Station ID: </strong>%s<br>Snip:%g Km<sup>2</sup>",
+                      xBas$id2, round(xBas$km2, 3)
+                    ) %>% lapply(htmltools::HTML),
+                    
+                    labelOptions = labelOptions(
+                      style = list("font-weight" = "normal", padding = "3px 8px"),
+                      textsize = "15px",
+                      direction = "auto")) %>%
+        
+        addCircleMarkers(lng = newPt$xnew,
+                         lat = newPt$ynew, 
+                         color = 'red',
+                         group = 'NewPoint', 
+                         radius = 5) %>%
+        
+        addCircleMarkers(
+          lng = newPt$xshp,
+          lat = newPt$yshp, 
+           color = 'blue', radius = 20,
+          group = 'OriginalPoint'
+        )  %>%
+      
+      addLayersControl(baseGroups = c("OpenStreetMap", "Esri.WorldImagery"),
+                       position = 'topleft', 
+                       overlayGroups = c('Points',
+                                         'NewPoint',
+                                         'OriginalPoint'
+                       ),
+                       options = layersControlOptions(collapsed = FALSE)) 
+      
+      
+    }
   })
   
-
+  
   
   
   
