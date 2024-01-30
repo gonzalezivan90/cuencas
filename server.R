@@ -48,11 +48,13 @@ function(input, output, session) {
   output$inxycord <- renderText({isolate("Y: NA")})
   
   
-  reactive({
+  isolate({observe({
     
     selCol <- input$inxcolor
-    # selCol <- "Tamaño cuenca original"
-    selVar <- vars[names(vars) %in% selCol]
+    print(selCol)
+    # selCol <- "km2Nosn"
+    selVar <- vars[vars %in% selCol]
+    #selVar <- 'sou'
     qlPts$tempVar <- as.data.frame(qlPts[, selVar])[, selVar]
     # vars <- c(
     #   "Tamaño cuenca original" = "km2Nosn",
@@ -63,41 +65,62 @@ function(input, output, session) {
     #   "Fuente" = "source"
     # )
     
+    # get domain of numeric data
+    
     if (selVar %in% c('validated', 'source') ) {
+    
+      qlPts$tempVarFact <- as.numeric(as.factor(qlPts$tempVar))
+      uVals <- unique(cbind.data.frame(tempVarFact = qlPts$tempVarFact,
+                                       tempVar = qlPts$tempVar))
+      #uVals <- unique(qlPts$tempVarFact)
+      #colorPal <- colorNumeric(c("Yellow", "Purple"), domain = range(uVals$tempVarFact))
+      colorPal <- colorNumeric(palette = viridis(100), domain = range(uVals$tempVarFact))
+      
+      qlPts$tempVar <- qlPts$tempVarFact
+        
+      # # make map
+      # leaflet(qlPts) %>% 
+      #   addTiles() %>% 
+      #   addCircleMarkers(color = ~colorPal(tempVarFact))  %>%  
+      # 
+      # addLegend("bottomright",
+      #           #colors = c("#FFC125",  "#FFC125", "#8A4117", "#7D0552", "#571B7E"),
+      #           colors = colorPal(uVals$tempVarFact),
+      #           labels = uVals$tempVar,
+      #           title = selVar,
+      #           opacity = 1)
       
     } else if( selVar %in% c('km2Nosn','km2Hort','km2Nosn','km2Nosn')) {
       
+      (domain <- range(qlPts$tempVar))
+      # make palette
+      colorPal <- colorNumeric(palette = viridis(100), domain = domain)
+      
+      
     }
     
-    
-    leaflet()  %>% addTiles() %>% 
-      addCircleMarkers(data = qlPts, 
-                       layerId = ~id2,
-                       color = ~pal(tempVar),
-                       label = ~id2, 
-                       group = 'Points', radius = 2) %>%
-      addProviderTiles( "OpenStreetMap", group = "OpenStreetMap" ) %>%
-      addProviderTiles( "Esri.WorldImagery", group = "Esri.WorldImagery" ) %>%
-      addLayersControl(baseGroups = c("OpenStreetMap", "Esri.WorldImagery")) %>%
-      addLegend(colors = c('red', 'blue'), 
-                labels = c('Snip', 'Original'), opacity = 0.7, title = NULL,
-                position = "bottomleft") # , lng = ~xshp, lat = ~yshp
-    # addCircleMarkers(data = rv$pts_sp, label = ~ID, group = 'Points',  radius = 5)
-    #label = ~ID, group = 'Points'
-    #addTiles() # %>% setView(lng = -93.85, lat = 37.45, zoom = 4)
-    
-    
-    # get domain of numeric data
-    (domain <- range(quakes$depth))
-    
-    # make palette
-    pal <- colorNumeric(palette = viridis(100), domain = domain)
-    
-    # make map
-    leaflet(quakes) %>% 
-      addTiles() %>% 
-      addCircleMarkers(color = ~pal(depth)) 
-    
+    output$map <- renderLeaflet({
+      
+      leaflet()  %>% addTiles() %>% 
+        addCircleMarkers(data = qlPts, 
+                         layerId = ~id2,
+                         color = ~colorPal(tempVar),
+                         label = ~id2, 
+                         group = 'Points', radius = 2) %>%
+        addProviderTiles( "OpenStreetMap", group = "OpenStreetMap" ) %>%
+        addProviderTiles( "Esri.WorldImagery", group = "Esri.WorldImagery" ) %>%
+        addLayersControl(baseGroups = c("OpenStreetMap", "Esri.WorldImagery")) %>%
+        addLegend(title = names(selVar),
+                  #title = NULL,
+                  opacity = 0.7,
+                  colors = colorPal(uVals$tempVarFact), #c('red', 'blue'), 
+                  labels = uVals$tempVar, #c('Snip', 'Original'), 
+                  position = "bottomleft") # , lng = ~xshp, lat = ~yshp
+      # addCircleMarkers(data = rv$pts_sp, label = ~ID, group = 'Points',  radius = 5)
+      #label = ~ID, group = 'Points'
+      #addTiles() # %>% setView(lng = -93.85, lat = 37.45, zoom = 4)
+    })
+  })
   })
   
   # A reactive expression that returns the set of zips that are

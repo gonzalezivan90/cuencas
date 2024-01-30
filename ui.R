@@ -9,7 +9,7 @@ vars <- c(
   "Validado" = "validated",
   "Diferencia en Km2 entre cuencas" = "differencekm2",
   "Diferencia en % entre cuencas" = "differenceperc",
-  "Fuente" = "source"
+  "Fuente" = "sou"
   #"Caudal promedio anual" = 'annualav',
   #"Caudal minimo anual" = 'annualmn',
   #"Caudal maximo anual" = 'annualmx'
