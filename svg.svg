@@ -1,0 +1,10 @@
+<svg width="100" height="100" xmlns="http://18.190.126.82:3838/cuencas/">
+<foreignObject width="100" height="100">
+    <div xmlns="http://18.190.126.82:3838/cuencas/">
+        <ul>
+            <li>text</li>
+        </ul>
+        <!-- Other embed HTML element/text into SVG -->
+    </div>
+</foreignObject>
+</svg>
