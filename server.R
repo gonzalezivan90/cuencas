@@ -865,3 +865,10 @@ function(input, output, session) {
 # git clone https://github.com/gonzalezivan90/cuencas.git
 # chmod ugo+rwx . 
 # sudo chown -R shiny:shiny
+
+# sudo shiny; cd /srv...; git add . ; git commit -m "Change coordiantes()"; git push
+# git pull main --rebase --autostash
+# sudo chown -R shiny:shiny .
+# git stash
+# remove before commit, split or lost it
+# git pull connectscape |||  git pull --rebase --autostash || git pull origin HEAD
