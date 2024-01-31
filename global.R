@@ -16,10 +16,10 @@ library(sf)
 # save(qlPts, file = 'qlPts_1404.RData')
 # qlPts$validated <- 0
 
-(load('qlPts_1404.RData')) # qlPts
- qlPts$id2 <- gsub('xyz', '-', qlPts$qlid)
+#(load('qlPts_1404.RData')) # qlPts
+# qlPts$id2 <- gsub('xyz', '-', qlPts$qlid)
 # # table(bas$bastype)
- table(qlPts$sou)
+# table(qlPts$sou)
 
 #table(qlPts$sou)
 # (load('bas_bind5307u1352_snip1724_nosnp1704_hort1879.RData')) # bas
@@ -38,10 +38,10 @@ library(sf)
 # table(basins$bastype)
 
 # save(basins, file = 'SF_wgs_bas_nosnp1704_hort1879.RData')
-(load('SF_wgs_bas_nosnp1704_hort1879.RData')) # basins
-table(basins$bastype)
-table(basins$source)
-basins$id2
+ (load('rdata/SF_wgs_bas_nosnp1704_hort1879.RData')) # basins
+# table(basins$bastype)
+# table(basins$source)
+# basins$id2
 # 
 # basAreas <- as.data.frame.matrix( xtabs(data = basins, km2 ~ id2 + bastype) )
 # basAreas$qlid <- rownames(basAreas)
@@ -71,6 +71,7 @@ basins$id2
 #  qlPts$souCol <- as.numeric(as.factor(qlPts$sou))
 #  table(qlPts$souCol)
 #  table(qlPts$sou)
+# qlPts$revised <- qlPts$validated <- 0 
 # save(qlPts, file = 'qlPts_1404.RData')
  
  
@@ -80,9 +81,16 @@ basins$id2
 # tail(unique(qlSummary$cod))
 #tail(qlSummary$cod, 100)
 
-(load('qlSummary_qlList_1240stations.RData')) # "qlSummary" "qlList"
-(load('newPoints_horton_990.RData')) # newPoints
+(load('rdata/qlPts_1404.RData')) # qlPts
+(load('rdata/qlSummary_qlList_1240stations.RData')) # "qlSummary" "qlList"
+(load('rdata/newPoints_horton_990.RData')) # newPoints
 newPoints$qlid <- gsub('xyz', '-', newPoints$id)
+
+newComments <- list.files(path = 'comm/', pattern = '.csv')
+revStations <- gsub('.+__|.csv', '', newComments)
+qlPts$revised[qlPts$id2 %in% revStations] <- 1
+
+
 # dim(newPoints) # 990   
 # head(newPoints) # 990   
 
