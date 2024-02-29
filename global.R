@@ -1,8 +1,9 @@
 library(dplyr)
 #library(terra)
 library(sf)
+#setwd('/srv/shiny-server/cuencas/')
 
-
+{
 # sapply(c('/srv/shiny-server/cuencas/', 'N:/Mi unidad/git/cuencas'),
 #        FUN = function(x) tryCatch(setwd(x), error = function(e) NULL))
  # setwd('/srv/shiny-server/cuencas/')
@@ -80,6 +81,7 @@ library(sf)
 # unique(qlSummary$cod)
 # tail(unique(qlSummary$cod))
 #tail(qlSummary$cod, 100)
+}
 
 (load('rdata/qlPts_1404.RData')) # qlPts
 (load('rdata/qlSummary_qlList_1240stations.RData')) # "qlSummary" "qlList"
@@ -90,6 +92,7 @@ newComments <- list.files(path = 'comm/', pattern = '.csv')
 revStations <- gsub('.+__|.csv', '', newComments)
 qlPts$revised[qlPts$id2 %in% revStations] <- 1
 
+#revStations %in% qlPts$id2 
 
 # dim(newPoints) # 990   
 # head(newPoints) # 990   

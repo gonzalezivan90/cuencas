@@ -74,10 +74,22 @@
                  h4(''),
                  
                  textInput("inxcomment", "Comentario:", ''),
+                 
+                 
                  h5('Nuevas coordenadas:'),
+                 shiny::fixedRow(
+                   #actionButton("gocoord", HTML("Enviar coordenada")),
+                   column(8, 
+                          verbatimTextOutput("inxxcord"),
+                          verbatimTextOutput("inxycord")
+                   ),
+                   column(4, 
+                          actionButton('delineate', HTML('Delinear<br/>de<br/>nuevo'),
+                                       style='height: 80px; width: 80px'),
+                   )
+                 ),
 
-                 verbatimTextOutput("inxxcord"),
-                 verbatimTextOutput("inxycord"),
+               
                  shiny::fixedRow(
                  #actionButton("gocoord", HTML("Enviar coordenada")),
                    column(3, 
