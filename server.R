@@ -1006,7 +1006,7 @@ function(input, output, session) {
 # chmod ugo+rwx . 
 # sudo chown -R shiny:shiny
 
-# sudo shiny; cd /srv...; git add . ; git commit -m "Change coordiantes()"; git push
+# sudo shiny; cd /srv/shiny-server/cuencas; git add . ; git commit -m "Run grass 2 delineation"; git push
 # git pull main --rebase --autostash
 # sudo chown -R shiny:shiny .
 # git stash
